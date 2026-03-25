@@ -79,3 +79,91 @@ export interface AnalysisResponse {
     workout_id: number;
     analysis: string;
 }
+
+export interface NutritionGoal {
+    id: number;
+    user_id: number;
+    calorie_target: number;
+    protein_target: number;
+    carbs_target: number;
+    fat_target: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface NutritionMacroTotals {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    fiber: number;
+    sugar: number;
+}
+
+export interface NutritionFoodEntry {
+    id: number;
+    meal_entry_id: number;
+    name: string;
+    brand: string | null;
+    barcode: string | null;
+    quantity: number;
+    unit: string;
+    grams: number;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    fiber: number | null;
+    sugar: number | null;
+    source: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface NutritionMealEntry {
+    id: number;
+    user_id: number;
+    meal_type: string;
+    entry_date: string;
+    title: string | null;
+    notes: string | null;
+    created_at: string;
+    updated_at: string;
+    foods: NutritionFoodEntry[];
+}
+
+export interface NutritionDaySummary {
+    date: string;
+    goals: NutritionGoal;
+    totals: NutritionMacroTotals;
+    remaining: NutritionMacroTotals;
+    meals: NutritionMealEntry[];
+}
+
+export interface NutritionHistoryPoint {
+    date: string;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+}
+
+export interface NutritionFoodLookupResult {
+    barcode: string;
+    name: string;
+    brand: string | null;
+    image_url: string | null;
+    default_grams: number;
+    calories_per_100g: number;
+    protein_per_100g: number;
+    carbs_per_100g: number;
+    fat_per_100g: number;
+    fiber_per_100g: number | null;
+    sugar_per_100g: number | null;
+    source: string;
+}
+
+export interface NutritionInsightResponse {
+    period: string;
+    summary: string;
+}

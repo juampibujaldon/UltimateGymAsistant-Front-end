@@ -2,22 +2,32 @@
  * Login page.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Zap, Mail, Lock, Loader2, ArrowRight } from "lucide-react";
+import { Zap, Mail, Lock, Loader2, ArrowRight, FlaskConical } from "lucide-react";
 import apiClient from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function Login() {
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const { isAuthenticated, loading: authLoading, login, demoLogin, demoEnabled } = useAuth();
     const { language } = useLanguage();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (!authLoading && isAuthenticated) {
+            navigate("/");
+        }
+    }, [authLoading, isAuthenticated, navigate]);
+
+    if (authLoading || isAuthenticated) {
+        return null;
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -42,6 +52,20 @@ export default function Login() {
         } catch (e) {
             const err = e as { response?: { data?: { detail?: string } } };
             setError(err.response?.data?.detail || "Login failed. Check your credentials.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDemoLogin = async () => {
+        setError(null);
+        setLoading(true);
+        try {
+            await demoLogin();
+            navigate("/");
+        } catch (e) {
+            const err = e as { response?: { data?: { detail?: string } } };
+            setError(err.response?.data?.detail || "Demo login is not available.");
         } finally {
             setLoading(false);
         }
@@ -119,6 +143,18 @@ export default function Login() {
                             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
                             {loading ? (language === "es" ? "Ingresando..." : "Signing in...") : (language === "es" ? "Entrar" : "Sign In")}
                         </button>
+
+                        {demoEnabled && (
+                            <button
+                                type="button"
+                                disabled={loading}
+                                onClick={handleDemoLogin}
+                                className="btn-secondary w-full h-12 justify-center text-base font-bold"
+                            >
+                                <FlaskConical className="w-5 h-5" />
+                                {language === "es" ? "Entrar como demo" : "Continue as demo"}
+                            </button>
+                        )}
                     </form>
 
                     <div className="text-center text-sm text-text-secondary">

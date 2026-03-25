@@ -1,114 +1,130 @@
-/**
- * Navbar – desktop sidebar + mobile bottom tab bar.
- */
-
 import { NavLink, useNavigate } from "react-router-dom";
 import {
-    LayoutDashboard, Dumbbell, History, BrainCircuit, TrendingUp, Zap, LogOut, User
+  BrainCircuit,
+  Dumbbell,
+  History,
+  LayoutDashboard,
+  LogOut,
+  Plus,
+  Salad,
+  TrendingUp,
+  User,
+  Zap,
 } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import { useAuth } from "../context/AuthContext";
 import type { Language } from "../i18n/translations";
+import { nutritionEnabled } from "../config/features";
 
-const FLAG: Record<Language, string> = { en: "🇺🇸", es: "🇦🇷" };
+const FLAG: Record<Language, string> = { en: "US", es: "ES" };
 const NEXT: Record<Language, Language> = { en: "es", es: "en" };
 
 export default function Navbar() {
-    const navigate = useNavigate();
-    const { t, language, setLanguage } = useLanguage();
-    const { logout } = useAuth();
+  const navigate = useNavigate();
+  const { t, language, setLanguage } = useLanguage();
+  const { logout } = useAuth();
 
-    const navItems = [
-        { to: "/", icon: LayoutDashboard, label: t.nav.dashboard },
-        { to: "/log", icon: Dumbbell, label: t.nav.logWorkout },
-        { to: "/history", icon: History, label: t.nav.history },
-        { to: "/analysis", icon: BrainCircuit, label: t.nav.aiAnalysis },
-        { to: "/progress", icon: TrendingUp, label: t.nav.progress },
-        { to: "/profile", icon: User, label: "Perfil" },
-    ];
+  const navItems = [
+    { to: "/", icon: LayoutDashboard, label: t.nav.dashboard },
+    { to: "/log", icon: Dumbbell, label: t.nav.logWorkout },
+    { to: "/history", icon: History, label: t.nav.history },
+    { to: "/analysis", icon: BrainCircuit, label: t.nav.aiAnalysis },
+    { to: "/progress", icon: TrendingUp, label: t.nav.progress },
+    ...(nutritionEnabled
+      ? [{ to: "/nutrition", icon: Salad, label: language === "es" ? "Nutricion" : "Nutrition" }]
+      : []),
+    { to: "/profile", icon: User, label: language === "es" ? "Perfil" : "Profile" },
+  ];
 
-    const handleLogout = () => {
-        logout();
-        navigate("/login");
-    };
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
-    return (
-        <>
-            {/* ── Desktop sidebar ─────────────────────────────────────── */}
-            <aside className="hidden md:flex fixed left-0 top-0 h-full w-64 bg-surface border-r border-surface-border flex-col z-40 transition-colors duration-300">
-                {/* Logo */}
-                <div className="flex items-center gap-3 px-6 py-5 border-b border-surface-border">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center shadow-lg transform transition hover:scale-105 duration-300">
-                        <Zap className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                        <h1 className="font-bold text-text leading-tight">{t.nav.appName}</h1>
-                        <p className="text-xs text-text-muted leading-tight">{t.nav.appSub}</p>
-                    </div>
-                </div>
+  return (
+    <>
+      <aside className="fixed left-0 top-0 z-40 hidden h-full w-72 p-4 md:flex">
+        <div className="glass-panel flex h-full w-full flex-col rounded-[2rem] p-4">
+          <div className="flex items-center gap-3 border-b border-surface-border px-4 py-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-accent-500 shadow-lg">
+              <Zap className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h1 className="font-bold leading-tight text-text">{t.nav.appName}</h1>
+              <p className="text-xs leading-tight text-text-muted">{t.nav.appSub}</p>
+            </div>
+          </div>
 
-                {/* Nav links */}
-                <nav className="flex-1 py-4 px-3 space-y-1">
-                    {navItems.map(({ to, icon: Icon, label }) => (
-                        <NavLink
-                            key={to}
-                            to={to}
-                            end={to === "/"}
-                            className={({ isActive }) =>
-                                `flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${isActive
-                                    ? "bg-brand-600/20 text-brand-600 dark:text-brand-400 border border-brand-600/30 shadow-sm"
-                                    : "text-text-secondary hover:text-text hover:bg-surface-hover"
-                                }`
-                            }
-                        >
-                            <Icon className="w-4 h-4 flex-shrink-0" />
-                            {label}
-                        </NavLink>
-                    ))}
-                </nav>
+          <div className="px-3 pt-4">
+            <button type="button" onClick={() => navigate("/log")} className="btn-primary w-full justify-center">
+              <Plus className="h-4 w-4" />
+              {language === "es" ? "Nueva sesion" : "New session"}
+            </button>
+          </div>
 
-                {/* Bottom actions */}
-                <div className="px-3 py-4 border-t border-surface-border space-y-2">
-                    {/* Language toggle */}
-                    <button
-                        onClick={() => setLanguage(NEXT[language])}
-                        className="w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium bg-surface-hover hover:bg-surface-border text-text transition-all duration-200 active:scale-95"
-                    >
-                        <span className="text-lg leading-none">{FLAG[NEXT[language]]}</span>
-                        <span>{NEXT[language].toUpperCase()}</span>
-                    </button>
+          <nav className="flex-1 space-y-1 px-3 py-4">
+            {navItems.map(({ to, icon: Icon, label }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={to === "/"}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200 ${
+                    isActive
+                      ? "border border-brand-500/30 bg-brand-500/12 text-brand-300 shadow-sm"
+                      : "text-text-secondary hover:bg-surface-hover hover:text-text"
+                  }`
+                }
+              >
+                <Icon className="h-4 w-4 flex-shrink-0" />
+                {label}
+              </NavLink>
+            ))}
+          </nav>
 
-                    {/* Logout */}
-                    <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium
-                                   text-red-500 hover:bg-red-500/10 transition-all duration-200 active:scale-95"
-                    >
-                        <LogOut className="w-4 h-4" />
-                        {language === "es" ? "Cerrar Sesión" : "Logout"}
-                    </button>
+          <div className="space-y-2 border-t border-surface-border px-3 py-4">
+            <button
+              onClick={() => setLanguage(NEXT[language])}
+              className="flex w-full items-center justify-center gap-3 rounded-2xl bg-surface-hover px-4 py-3 text-sm font-medium text-text transition-all duration-200"
+              type="button"
+            >
+              <span className="rounded-full border border-surface-border px-2 py-0.5 text-[11px] tracking-[0.18em]">
+                {FLAG[NEXT[language]]}
+              </span>
+              <span>{NEXT[language].toUpperCase()}</span>
+            </button>
 
-                    <p className="text-xs text-text-muted text-center pt-2">Gym AI Coach v1.2</p>
-                </div>
-            </aside>
+            <button
+              onClick={handleLogout}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium text-red-400 transition-all duration-200 hover:bg-red-500/10"
+              type="button"
+            >
+              <LogOut className="h-4 w-4" />
+              {language === "es" ? "Cerrar sesion" : "Logout"}
+            </button>
 
-            {/* ── Mobile bottom tab bar ────────────────────────────────── */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0a0a0a] border-t border-surface-border flex items-center safe-area-inset-bottom pb-2">
-                {navItems.map(({ to, icon: Icon, label }) => (
-                    <NavLink
-                        key={to}
-                        to={to}
-                        end={to === "/"}
-                        className={({ isActive }) =>
-                            `flex-1 flex flex-col items-center justify-center gap-1 py-3 text-[10px] font-medium transition-colors ${isActive ? "text-brand-600 dark:text-brand-400" : "text-text-secondary"
-                            }`
-                        }
-                    >
-                        <Icon className="w-5 h-5" />
-                        <span className="leading-none">{label}</span>
-                    </NavLink>
-                ))}
-            </nav>
-        </>
-    );
+            <p className="pt-2 text-center text-xs text-text-muted">Gym AI Coach v1.2</p>
+          </div>
+        </div>
+      </aside>
+
+      <nav className="mobile-nav md:hidden">
+        {navItems.map(({ to, icon: Icon, label }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={to === "/"}
+            className={({ isActive }) =>
+              `flex flex-1 flex-col items-center justify-center gap-1 py-3 text-[10px] font-medium transition-colors ${
+                isActive ? "text-brand-300" : "text-text-secondary"
+              }`
+            }
+          >
+            <Icon className="h-5 w-5" />
+            <span className="leading-none">{label}</span>
+          </NavLink>
+        ))}
+      </nav>
+    </>
+  );
 }
