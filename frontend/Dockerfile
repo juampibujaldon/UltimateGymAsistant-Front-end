@@ -1,0 +1,29 @@
+# Build stage
+FROM node:20-alpine AS build-stage
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install --legacy-peer-deps
+
+COPY . .
+
+# Use a placeholder at build time; entrypoint.sh replaces it at runtime
+ARG VITE_API_URL=__VITE_API_URL_PLACEHOLDER__
+ENV VITE_API_URL=$VITE_API_URL
+RUN npm run build
+
+# Production stage
+FROM nginx:stable-alpine AS production-stage
+
+RUN apk add --no-cache bash sed
+
+COPY --from=build-stage /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 80
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["nginx", "-g", "daemon off;"]
