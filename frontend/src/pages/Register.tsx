@@ -2,21 +2,33 @@
  * Register page.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Zap, Mail, Lock, User, Loader2, ArrowRight } from "lucide-react";
 import apiClient from "../api/client";
+import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function Register() {
     const navigate = useNavigate();
     const { language } = useLanguage();
+    const { isAuthenticated, loading: authLoading } = useAuth();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [fullName, setFullName] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (!authLoading && isAuthenticated) {
+            navigate("/");
+        }
+    }, [authLoading, isAuthenticated, navigate]);
+
+    if (authLoading || isAuthenticated) {
+        return null;
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
