@@ -5,9 +5,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Zap, Mail, Lock, Loader2, ArrowRight, FlaskConical } from "lucide-react";
+import axios from "axios";
 import apiClient from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
+import type { Token } from "../types";
 
 export default function Login() {
     const navigate = useNavigate();
@@ -35,25 +37,55 @@ export default function Login() {
         setLoading(true);
 
         try {
+            const identifier = email.trim();
+
             if (demoEnabled && email.trim() === "admin" && password === "admin") {
                 await localDemoLogin();
                 navigate("/");
                 return;
             }
 
-            const formData = new FormData();
-            formData.append("username", email);
-            formData.append("password", password);
+            let tokenData: Token | null = null;
+            let lastError: unknown = null;
 
-            const response = await apiClient.post("/auth/login", formData, {
-                headers: { "Content-Type": "multipart/form-data" },
-            });
+            try {
+                const params = new URLSearchParams();
+                params.append("username", identifier);
+                params.append("password", password);
 
-            await login(response.data);
+                const response = await apiClient.post<Token>("/auth/login", params, {
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                });
+                tokenData = response.data;
+            } catch (firstError) {
+                lastError = firstError;
+
+                try {
+                    const response = await apiClient.post<Token>("/auth/login", {
+                        email: identifier,
+                        username: identifier,
+                        password,
+                    });
+                    tokenData = response.data;
+                } catch (secondError) {
+                    lastError = secondError;
+                }
+            }
+
+            if (!tokenData?.access_token) {
+                throw lastError;
+            }
+
+            await login(tokenData);
             navigate("/");
         } catch (e) {
-            const err = e as { response?: { data?: { detail?: string } } };
-            setError(err.response?.data?.detail || "Login failed. Check your credentials.");
+            if (axios.isAxiosError(e)) {
+                const detail = typeof e.response?.data?.detail === "string" ? e.response.data.detail : null;
+                const message = typeof e.response?.data?.message === "string" ? e.response.data.message : null;
+                setError(detail || message || "Login failed. Check your credentials.");
+            } else {
+                setError("Login failed. Check your credentials.");
+            }
         } finally {
             setLoading(false);
         }
