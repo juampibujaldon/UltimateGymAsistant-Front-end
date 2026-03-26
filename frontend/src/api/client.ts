@@ -4,7 +4,26 @@
 
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
+function resolveApiBaseUrl(): string {
+    const configuredUrl = import.meta.env.VITE_API_URL;
+
+    if (typeof window === "undefined") {
+        return configuredUrl || "/api";
+    }
+
+    const hostname = window.location.hostname;
+    const isLocalEnvironment = hostname === "localhost" || hostname === "127.0.0.1";
+
+    if (isLocalEnvironment) {
+        return configuredUrl || "/api";
+    }
+
+    // In deployed environments we force same-origin API calls to avoid CORS regressions
+    // from stale absolute backend URLs baked into the bundle.
+    return "/api";
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 const AUTH_ROUTES = new Set(["/auth/login", "/auth/register", "/auth/demo-login"]);
 
 const apiClient = axios.create({
