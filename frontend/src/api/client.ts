@@ -5,6 +5,7 @@
 import axios from "axios";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
+const AUTH_ROUTES = new Set(["/auth/login", "/auth/register", "/auth/demo-login"]);
 
 const apiClient = axios.create({
     baseURL: API_BASE_URL,
@@ -16,8 +17,9 @@ const apiClient = axios.create({
 // Add a request interceptor to include the JWT token
 apiClient.interceptors.request.use(
     (config) => {
+        const requestPath = typeof config.url === "string" ? config.url : "";
         const token = localStorage.getItem("gym_ai_token");
-        if (token) {
+        if (token && !AUTH_ROUTES.has(requestPath)) {
             config.headers.Authorization = `Bearer ${token}`;
         }
         return config;

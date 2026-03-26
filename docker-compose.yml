@@ -12,7 +12,8 @@ services:
       - "${FRONTEND_PORT:-8080}:80"
     environment:
       PORT: 80
-      VITE_API_URL: ${VITE_API_URL:-http://host.docker.internal:8000}
+      BACKEND_URL: ${BACKEND_URL:-http://host.docker.internal:8000}
+      CLIENT_API_URL: ${CLIENT_API_URL:-/api}
       VITE_ENABLE_NUTRITION: ${VITE_ENABLE_NUTRITION:-true}
       VITE_ENABLE_DEMO_AUTH: ${VITE_ENABLE_DEMO_AUTH:-true}
     extra_hosts:
