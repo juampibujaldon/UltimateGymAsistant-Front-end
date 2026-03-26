@@ -11,7 +11,7 @@ import { useLanguage } from "../context/LanguageContext";
 
 export default function Login() {
     const navigate = useNavigate();
-    const { isAuthenticated, loading: authLoading, login, demoLogin, demoEnabled } = useAuth();
+    const { isAuthenticated, loading: authLoading, login, demoLogin, localDemoLogin, demoEnabled } = useAuth();
     const { language } = useLanguage();
 
     const [email, setEmail] = useState("");
@@ -35,6 +35,12 @@ export default function Login() {
         setLoading(true);
 
         try {
+            if (demoEnabled && email.trim() === "admin" && password === "admin") {
+                await localDemoLogin();
+                navigate("/");
+                return;
+            }
+
             const formData = new FormData();
             formData.append("username", email);
             formData.append("password", password);
@@ -44,10 +50,6 @@ export default function Login() {
             });
 
             await login(response.data);
-
-            // After login, we fetch the current user to satisfy context
-            // In a better design, the API would return the user too.
-            // For now, we'll just redirect to dashboard.
             navigate("/");
         } catch (e) {
             const err = e as { response?: { data?: { detail?: string } } };
@@ -73,7 +75,6 @@ export default function Login() {
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4 bg-bg overflow-hidden relative">
-            {/* Background blobs */}
             <div className="absolute top-0 right-0 w-96 h-96 bg-brand-600/10 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2" />
             <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent-500/10 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/2" />
 
@@ -92,6 +93,11 @@ export default function Login() {
                         <p className="text-text-secondary text-sm">
                             {language === "es" ? "Ingresá para seguir entrenando" : "Sign in to keep training"}
                         </p>
+                        {demoEnabled && (
+                            <p className="text-xs text-brand-300">
+                                {language === "es" ? "Acceso local de prueba: admin / admin" : "Local test access: admin / admin"}
+                            </p>
+                        )}
                     </div>
 
                     {error && (
@@ -108,10 +114,10 @@ export default function Login() {
                             <div className="relative">
                                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
                                 <input
-                                    type="email"
+                                    type="text"
                                     required
                                     className="input pl-10 h-12"
-                                    placeholder="hola@ejemplo.com"
+                                    placeholder={demoEnabled ? "admin" : "hola@ejemplo.com"}
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                 />

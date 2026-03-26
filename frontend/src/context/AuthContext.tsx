@@ -3,7 +3,7 @@
  * Manages user session, token persistence, and login/register flows.
  */
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import apiClient from "../api/client";
 import type { User, Token } from "../types";
 import { demoAuthEnabled } from "../config/features";
@@ -14,6 +14,7 @@ interface AuthContextType {
     loading: boolean;
     login: (tokenData: Token) => Promise<void>;
     demoLogin: () => Promise<void>;
+    localDemoLogin: () => Promise<void>;
     logout: () => void;
     isAuthenticated: boolean;
     demoEnabled: boolean;
@@ -26,27 +27,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             const stored = localStorage.getItem("gym_ai_user");
             return stored ? JSON.parse(stored) : null;
-        } catch { return null; }
+        } catch {
+            return null;
+        }
     });
     const [token, setToken] = useState<string | null>(() => localStorage.getItem("gym_ai_token"));
-    const [loading, setLoading] = useState(true);
+    const [loading] = useState(false);
 
     const login = async (tokenData: Token) => {
         localStorage.setItem("gym_ai_token", tokenData.access_token);
         setToken(tokenData.access_token);
-
-        // Fetch user profile immediately after login if needed, 
-        // but for now we'll assume the login flow or a secondary call sets it.
-        // In a real app, you might decode the JWT or call /auth/me
     };
 
-    useEffect(() => {
-        setLoading(false);
-    }, []);
+    const localDemoLogin = async () => {
+        const demoToken = "demo-admin-token";
+        const demoUser: User = {
+            id: -1,
+            email: "admin@local.demo",
+            full_name: "Admin Demo",
+            weight: null,
+            height: null,
+            goal: "Demo mode",
+            is_active: true,
+            created_at: new Date().toISOString(),
+        };
+
+        localStorage.setItem("gym_ai_token", demoToken);
+        localStorage.setItem("gym_ai_user", JSON.stringify(demoUser));
+        setToken(demoToken);
+        setUser(demoUser);
+    };
 
     const demoLogin = async () => {
-        const response = await apiClient.post("/auth/demo-login");
-        await login(response.data);
+        try {
+            const response = await apiClient.post("/auth/demo-login");
+            await login(response.data);
+        } catch {
+            await localDemoLogin();
+        }
     };
 
     const logout = () => {
@@ -62,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         login,
         demoLogin,
+        localDemoLogin,
         logout,
         isAuthenticated: !!token,
         demoEnabled: demoAuthEnabled,

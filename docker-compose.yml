@@ -1,0 +1,20 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-__VITE_API_URL_PLACEHOLDER__}
+        VITE_ENABLE_NUTRITION: ${VITE_ENABLE_NUTRITION:-true}
+        VITE_ENABLE_DEMO_AUTH: ${VITE_ENABLE_DEMO_AUTH:-true}
+    container_name: ultimate-gym-frontend
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    environment:
+      PORT: 80
+      VITE_API_URL: ${VITE_API_URL:-http://host.docker.internal:8000}
+      VITE_ENABLE_NUTRITION: ${VITE_ENABLE_NUTRITION:-true}
+      VITE_ENABLE_DEMO_AUTH: ${VITE_ENABLE_DEMO_AUTH:-true}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

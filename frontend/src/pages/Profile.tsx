@@ -3,6 +3,7 @@ import { User, Activity, Target, Loader2, Sparkles, Scale, Ruler, Save, BrainCir
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import type { Language } from "../i18n/translations";
+import apiClient from "../api/client";
 
 const FLAG: Record<Language, string> = { en: "🇺🇸", es: "🇦🇷" };
 const NEXT: Record<Language, Language> = { en: "es", es: "en" };
@@ -32,16 +33,11 @@ export default function Profile() {
         if (!token) return;
         setSaving(true);
         try {
-            const res = await fetch("/api/auth/me", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-                body: JSON.stringify({
+            await apiClient.patch("/auth/me", {
                     weight: weight ? parseFloat(weight) : null,
                     height: height ? parseFloat(height) : null,
                     goal: goal || null
-                })
             });
-            if (!res.ok) throw new Error("Failed to save profile");
             alert("Perfil guardado correctamente.");
         } catch (e) {
             console.error(e);
@@ -55,11 +51,7 @@ export default function Profile() {
         if (!token) return;
         setLoadingInsights(true);
         try {
-            const res = await fetch(`/api/auth/me/insights?lang=${language}`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (!res.ok) throw new Error("Failed to load insights");
-            const data = await res.json();
+            const { data } = await apiClient.get(`/auth/me/insights?lang=${language}`);
             setInsights(data.insights);
         } catch (e) {
             console.error(e);

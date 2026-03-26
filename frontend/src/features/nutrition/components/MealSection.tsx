@@ -1,46 +1,33 @@
 import { useMemo, useState } from "react";
 import { Plus, ScanBarcode, Trash2 } from "lucide-react";
-import type { NutritionFoodEntry, NutritionMealEntry } from "../../../types";
-
-function sumFoods(foods: NutritionFoodEntry[]) {
-  return foods.reduce(
-    (acc, food) => {
-      acc.calories += food.calories;
-      acc.protein += food.protein;
-      acc.carbs += food.carbs;
-      acc.fat += food.fat;
-      return acc;
-    },
-    { calories: 0, protein: 0, carbs: 0, fat: 0 },
-  );
-}
+import type { NutritionMealEntry } from "../../../types";
+import { sumMealFoods } from "../domain/calculations";
+import type { MealType } from "../domain/types";
+import FoodEntryCard from "./FoodEntryCard";
 
 export default function MealSection({
   title,
   mealType,
   meal,
   labels,
+  saving,
   onCreateMeal,
   onDeleteMeal,
   onDeleteFood,
+  onUpdateFood,
   onAddManualFood,
   onScanFood,
 }: {
   title: string;
-  mealType: string;
+  mealType: MealType;
   meal?: NutritionMealEntry;
   labels: Record<string, string>;
-  onCreateMeal: (mealType: string) => Promise<NutritionMealEntry>;
+  saving?: boolean;
+  onCreateMeal: (mealType: MealType) => Promise<NutritionMealEntry>;
   onDeleteMeal: (mealId: number) => Promise<void>;
   onDeleteFood: (foodId: number) => Promise<void>;
-  onAddManualFood: (mealId: number, payload: {
-    name: string;
-    grams: number;
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-  }) => Promise<void>;
+  onUpdateFood: (foodId: number, payload: { grams: number; calories: number; protein: number; carbs: number; fat: number }) => Promise<void>;
+  onAddManualFood: (mealId: number, payload: { name: string; grams: number; calories: number; protein: number; carbs: number; fat: number }) => Promise<void>;
   onScanFood: (meal: NutritionMealEntry) => void;
 }) {
   const [form, setForm] = useState({
@@ -51,8 +38,8 @@ export default function MealSection({
     carbs: 0,
     fat: 0,
   });
-  const [submitting, setSubmitting] = useState(false);
-  const totals = useMemo(() => sumFoods(meal?.foods ?? []), [meal?.foods]);
+
+  const totals = useMemo(() => sumMealFoods(meal?.foods ?? []), [meal?.foods]);
 
   const ensureMeal = async () => {
     if (meal) return meal;
@@ -61,74 +48,77 @@ export default function MealSection({
 
   const handleAdd = async () => {
     if (!form.name.trim()) return;
-    setSubmitting(true);
-    try {
-      const targetMeal = await ensureMeal();
-      await onAddManualFood(targetMeal.id, {
-        name: form.name.trim(),
-        grams: Number(form.grams),
-        calories: Number(form.calories),
-        protein: Number(form.protein),
-        carbs: Number(form.carbs),
-        fat: Number(form.fat),
-      });
-      setForm({ name: "", grams: 100, calories: 0, protein: 0, carbs: 0, fat: 0 });
-    } finally {
-      setSubmitting(false);
-    }
+    const targetMeal = await ensureMeal();
+    await onAddManualFood(targetMeal.id, { ...form, name: form.name.trim() });
+    setForm({ name: "", grams: 100, calories: 0, protein: 0, carbs: 0, fat: 0 });
   };
 
   return (
-    <div className="glass-panel rounded-[2rem] p-5">
+    <section className="glass-panel rounded-[2rem] p-5">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-lg font-semibold text-text">{title}</h3>
-          <p className="text-sm text-text-secondary">
+          <p className="text-xs uppercase tracking-[0.22em] text-text-muted">{labels.mealLabel}</p>
+          <h3 className="mt-1 text-xl font-semibold text-text">{title}</h3>
+          <p className="mt-2 text-sm text-text-secondary">
             {totals.calories.toFixed(0)} kcal · {totals.protein.toFixed(0)}p · {totals.carbs.toFixed(0)}c · {totals.fat.toFixed(0)}f
           </p>
         </div>
-        <div className="flex gap-2">
-          <button type="button" className="btn-secondary" onClick={async () => onScanFood(await ensureMeal())}>
+        <div className="flex items-center gap-2">
+          <button type="button" className="btn-secondary px-3" onClick={async () => onScanFood(await ensureMeal())} disabled={saving}>
             <ScanBarcode className="h-4 w-4" />
+            <span className="hidden sm:inline">{labels.scanShort}</span>
           </button>
           {meal && (
-            <button type="button" className="btn-danger px-3 py-2" onClick={() => onDeleteMeal(meal.id)}>
+            <button type="button" className="btn-danger px-3 py-3" onClick={() => onDeleteMeal(meal.id)} disabled={saving}>
               <Trash2 className="h-4 w-4" />
             </button>
           )}
         </div>
       </div>
 
-      <div className="space-y-2">
-        {(meal?.foods ?? []).map((food) => (
-          <div key={food.id} className="flex items-center justify-between rounded-2xl border border-surface-border bg-surface-hover px-4 py-3">
-            <div>
-              <p className="font-medium text-text">{food.name}</p>
-              <p className="text-xs text-text-secondary">
-                {food.grams.toFixed(0)}g · {food.calories.toFixed(0)} kcal · {food.protein.toFixed(0)}p · {food.carbs.toFixed(0)}c · {food.fat.toFixed(0)}f
-              </p>
-            </div>
-            <button type="button" className="text-red-400 hover:text-red-300" onClick={() => onDeleteFood(food.id)}>
-              <Trash2 className="h-4 w-4" />
-            </button>
+      <div className="space-y-3">
+        {(meal?.foods ?? []).length === 0 && (
+          <div className="rounded-[1.4rem] border border-dashed border-white/10 bg-white/[0.03] px-4 py-5 text-sm text-text-secondary">
+            {labels.emptyMeal}
           </div>
+        )}
+        {(meal?.foods ?? []).map((food) => (
+          <FoodEntryCard
+            key={food.id}
+            food={food}
+            labels={labels}
+            onDelete={async (foodId) => onDeleteFood(foodId)}
+            onUpdate={async (foodId, payload) =>
+              onUpdateFood(foodId, {
+                grams: payload.grams ?? food.grams,
+                calories: payload.calories ?? food.calories,
+                protein: payload.protein ?? food.protein,
+                carbs: payload.carbs ?? food.carbs,
+                fat: payload.fat ?? food.fat,
+              })
+            }
+          />
         ))}
       </div>
 
-      <div className="mt-4 grid gap-2 md:grid-cols-6">
-        <input className="input md:col-span-2" placeholder={labels.foodName} value={form.name} onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))} />
-        <input className="input" type="number" placeholder="g" value={form.grams} onChange={(event) => setForm((prev) => ({ ...prev, grams: Number(event.target.value) }))} />
-        <input className="input" type="number" placeholder="kcal" value={form.calories} onChange={(event) => setForm((prev) => ({ ...prev, calories: Number(event.target.value) }))} />
-        <input className="input" type="number" placeholder="P" value={form.protein} onChange={(event) => setForm((prev) => ({ ...prev, protein: Number(event.target.value) }))} />
-        <input className="input" type="number" placeholder="C" value={form.carbs} onChange={(event) => setForm((prev) => ({ ...prev, carbs: Number(event.target.value) }))} />
-      </div>
-      <div className="mt-2 grid gap-2 md:grid-cols-[1fr_auto]">
-        <input className="input" type="number" placeholder="F" value={form.fat} onChange={(event) => setForm((prev) => ({ ...prev, fat: Number(event.target.value) }))} />
-        <button type="button" className="btn-primary justify-center" disabled={submitting} onClick={handleAdd}>
+      <div className="mt-5 rounded-[1.5rem] border border-white/8 bg-slate-950/25 p-4">
+        <div className="mb-3">
+          <h4 className="text-sm font-semibold text-text">{labels.addFood}</h4>
+          <p className="text-xs text-text-secondary">{labels.manualHint}</p>
+        </div>
+        <div className="grid gap-2 md:grid-cols-2">
+          <input className="input md:col-span-2" placeholder={labels.foodName} value={form.name} onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))} />
+          <input className="input" type="number" placeholder="g" value={form.grams} onChange={(event) => setForm((prev) => ({ ...prev, grams: Number(event.target.value) }))} />
+          <input className="input" type="number" placeholder="kcal" value={form.calories} onChange={(event) => setForm((prev) => ({ ...prev, calories: Number(event.target.value) }))} />
+          <input className="input" type="number" placeholder="P" value={form.protein} onChange={(event) => setForm((prev) => ({ ...prev, protein: Number(event.target.value) }))} />
+          <input className="input" type="number" placeholder="C" value={form.carbs} onChange={(event) => setForm((prev) => ({ ...prev, carbs: Number(event.target.value) }))} />
+          <input className="input md:col-span-2" type="number" placeholder="F" value={form.fat} onChange={(event) => setForm((prev) => ({ ...prev, fat: Number(event.target.value) }))} />
+        </div>
+        <button type="button" className="btn-primary mt-3 w-full justify-center" disabled={saving} onClick={handleAdd}>
           <Plus className="h-4 w-4" />
           {labels.addFood}
         </button>
       </div>
-    </div>
+    </section>
   );
 }
