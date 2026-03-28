@@ -1,8 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   BrainCircuit,
-  Dumbbell,
-  History,
   LayoutDashboard,
   LogOut,
   Plus,
@@ -26,8 +24,6 @@ export default function Navbar() {
 
   const navItems = [
     { to: "/", icon: LayoutDashboard, label: t.nav.dashboard },
-    { to: "/log", icon: Dumbbell, label: t.nav.logWorkout },
-    { to: "/history", icon: History, label: t.nav.history },
     { to: "/analysis", icon: BrainCircuit, label: t.nav.aiAnalysis },
     { to: "/progress", icon: TrendingUp, label: t.nav.progress },
     ...(nutritionEnabled
@@ -109,19 +105,21 @@ export default function Navbar() {
       </aside>
 
       <nav className="mobile-nav md:hidden">
-        {navItems.map(({ to, icon: Icon, label }) => (
+        {navItems.map(({ to, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
             end={to === "/"}
             className={({ isActive }) =>
-              `flex flex-1 flex-col items-center justify-center gap-1 py-3 text-[10px] font-medium transition-colors ${
-                isActive ? "text-brand-300" : "text-text-secondary"
-              }`
+              `dock-icon ${isActive ? "active" : ""}`
             }
           >
-            <Icon className="h-5 w-5" />
-            <span className="leading-none">{label}</span>
+            {({ isActive }) => (
+              <>
+                <Icon className="h-6 w-6" strokeWidth={isActive ? 2.5 : 2} />
+                {isActive && <div className="dock-dot" />}
+              </>
+            )}
           </NavLink>
         ))}
       </nav>

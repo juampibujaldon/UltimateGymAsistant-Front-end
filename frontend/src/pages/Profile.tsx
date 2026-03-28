@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { User, Activity, Target, Loader2, Sparkles, Scale, Ruler, Save, BrainCircuit } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { User, Activity, Target, Loader2, Sparkles, Scale, Ruler, Save, BrainCircuit, Dumbbell, History, Plus, ChevronRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import type { Language } from "../i18n/translations";
@@ -11,6 +12,7 @@ const NEXT: Record<Language, Language> = { en: "es", es: "en" };
 export default function Profile() {
     const { user, token } = useAuth();
     const { language, setLanguage } = useLanguage();
+    const navigate = useNavigate();
     
     const [weight, setWeight] = useState("");
     const [height, setHeight] = useState("");
@@ -76,6 +78,30 @@ export default function Profile() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
+                {/* Entrenamientos (Log / History) */}
+                <div className="card p-5 md:col-span-2">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Dumbbell className="w-5 h-5 text-brand-400" />
+                        <h2 className="text-lg font-bold">Mis Entrenamientos</h2>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button onClick={() => navigate("/log")} className="w-full flex items-center justify-between p-4 rounded-xl bg-surface-hover/60 hover:bg-surface-border transition-colors border border-surface-border">
+                            <div className="flex items-center gap-3">
+                                <Plus className="w-5 h-5 text-brand-400" />
+                                <span className="font-medium text-sm">Registrar Entrenamiento</span>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-text-muted" />
+                        </button>
+                        <button onClick={() => navigate("/history")} className="w-full flex items-center justify-between p-4 rounded-xl bg-surface-hover/60 hover:bg-surface-border transition-colors border border-surface-border">
+                            <div className="flex items-center gap-3">
+                                <History className="w-5 h-5 text-accent-400" />
+                                <span className="font-medium text-sm">Ver Historial</span>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-text-muted" />
+                        </button>
+                    </div>
+                </div>
+
                 {/* Edit Form */}
                 <div className="card p-5">
                     <div className="flex items-center gap-2 mb-4">

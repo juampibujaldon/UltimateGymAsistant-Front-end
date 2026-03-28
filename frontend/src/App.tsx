@@ -46,7 +46,7 @@ function AuthenticatedLayout() {
     <div className="app-shell min-h-screen">
       <Navbar />
       <main className="min-h-screen md:ml-72">
-        <div className="sticky top-0 z-30 px-4 pt-4 md:hidden">
+        <div className="sticky top-0 z-30 px-4 pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-2 md:hidden">
           <div className="glass-panel flex items-center justify-between rounded-2xl px-4 py-3">
             <div>
               <p className="text-[11px] uppercase tracking-[0.22em] text-text-muted">
