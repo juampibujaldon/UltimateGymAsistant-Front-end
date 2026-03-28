@@ -8,8 +8,8 @@ RUN npm install --legacy-peer-deps
 
 COPY . .
 
-# Use a placeholder at build time; entrypoint.sh replaces it at runtime
-ARG VITE_API_URL=__VITE_API_URL_PLACEHOLDER__
+# The Railway builder will automatically supply VITE_API_URL via --build-arg
+ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
