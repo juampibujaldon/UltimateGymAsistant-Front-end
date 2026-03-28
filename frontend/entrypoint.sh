@@ -9,11 +9,8 @@ CLIENT_API_URL="${CLIENT_API_URL:-/api}"
 sed -e "s|__PORT__|${PORT}|g" -e "s|__BACKEND_URL__|${BACKEND_URL}|g" /etc/nginx/conf.d/default.conf > /tmp/default.conf
 mv /tmp/default.conf /etc/nginx/conf.d/default.conf
 
-echo "Injecting VITE_API_URL into built JS files..."
-find /usr/share/nginx/html -name "*.js" | while read -r file; do
-  sed -i "s|__VITE_API_URL_PLACEHOLDER__|${CLIENT_API_URL}|g" "$file"
-done
-echo "Injection complete."
+# We no longer replace placeholders with sed at runtime because it violates KISS 
+# and causes cache hashing bugs. The VITE_API_URL is safely baked in at build time.
 
 echo "Starting Nginx..."
 exec "$@"
