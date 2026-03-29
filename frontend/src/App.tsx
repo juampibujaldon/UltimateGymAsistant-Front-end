@@ -15,6 +15,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { useLanguage } from "./context/LanguageContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { nutritionEnabled } from "./config/features";
+import InstallPrompt from "./components/InstallPrompt";
 
 function PrivateRoute() {
   const { isAuthenticated, loading } = useAuth();
@@ -45,6 +46,7 @@ function AuthenticatedLayout() {
   return (
     <div className="app-shell min-h-screen">
       <Navbar />
+      <InstallPrompt />
       <main className="min-h-screen md:ml-72">
         <div className="sticky top-0 z-30 px-4 pt-4 md:hidden">
           <div className="glass-panel flex items-center justify-between rounded-2xl px-4 py-3">
